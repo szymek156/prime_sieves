@@ -1,19 +1,23 @@
+// extern crate test;
+use std::{time::Instant};
 
-extern crate test;
-use std::time::Instant;
 
-pub fn linear_sieve(n: usize) -> Vec<usize> {
-    let mut is_prime = vec![true; n + 1];
+// TODO:
+// Make concurrent
+// Make use of SIMD
+
+pub fn linear_sieve(limit: usize) -> Vec<usize> {
+    let mut is_prime = vec![true; limit + 1];
 
     let mut p = 2;
 
-    while p * p <= n {
+    while p * p <= limit {
         let mut q = p;
 
-        while p * q <= n {
+        while p * q <= limit {
             let mut x = p * q;
 
-            while x <= n {
+            while x <= limit {
                 is_prime[x] = false;
                 x *= p
             }
@@ -33,26 +37,17 @@ pub fn linear_sieve(n: usize) -> Vec<usize> {
         }
     }
 
-    let mut sieve = Vec::<usize>::new();
-    for (idx, el) in is_prime.iter().enumerate() {
-        if *el && idx > 1 {
-            sieve.push(idx);
-        }
-    }
+    let mut primes = Vec::<usize>::new();
+    primes.extend((2..limit).filter(|idx| is_prime[*idx]));
 
-    sieve
+
+    primes
 }
 
 /// Sieve algorithm by Atkin and Berndstein
-/// Based on https://github.com/fylux/SieveOfAtkin
 pub fn atkin_bernstein_sieve(limit: usize) -> Vec<usize> {
-    let mut res = vec![];
-    if limit > 2 {
-        res.push(2);
-    }
-    if limit > 3 {
-        res.push(3);
-    }
+    let mut res = vec![2, 3];
+    res.reserve(limit / 10);
 
     let mut sieve = vec![false; limit];
 
@@ -68,7 +63,7 @@ pub fn atkin_bernstein_sieve(limit: usize) -> Vec<usize> {
                 break;
             }
 
-            let n = 4 * x2 + y2;
+            let n = x2 * 4 + y2;
 
             if n <= limit && (n % 12 == 1 || n % 12 == 5) {
                 sieve[n] ^= true;
@@ -101,11 +96,7 @@ pub fn atkin_bernstein_sieve(limit: usize) -> Vec<usize> {
         }
     }
 
-    for a in 5..limit {
-        if sieve[a] {
-            res.push(a);
-        }
-    }
+    res.extend((5..limit).filter(|idx| sieve[*idx]));
 
     res
 }
@@ -124,7 +115,7 @@ pub fn nth(n: usize) -> usize {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use test::Bencher;
+    // use test::Bencher;
 
     #[test]
     fn sieves_yields_the_same_result() {
@@ -146,13 +137,13 @@ mod tests {
         assert_eq!(primes_atkin, primes_lin);
     }
 
-    #[bench]
-    fn bench_atkin(b: &mut Bencher) {
-        b.iter(|| atkin_bernstein_sieve(120000));
-    }
+    // #[bench]
+    // fn bench_atkin(b: &mut Bencher) {
+    //     b.iter(|| atkin_bernstein_sieve(120000));
+    // }
 
-    #[bench]
-    fn bench_linear(b: &mut Bencher) {
-        b.iter(|| linear_sieve(120000));
-    }
+    // #[bench]
+    // fn bench_linear(b: &mut Bencher) {
+    //     b.iter(|| linear_sieve(120000));
+    // }
 }
